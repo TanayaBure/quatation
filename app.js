@@ -537,7 +537,14 @@ function downloadPDF() {
             letterRendering: true,
             scrollX: 0,
             scrollY: 0,
-            windowWidth: 794 // Force html2canvas viewport width to match A4 width (210mm)
+            windowWidth: 794, // Force html2canvas viewport width to match A4 width (210mm)
+            windowHeight: docElement.offsetHeight,
+            onclone: (clonedDoc) => {
+                const clone = clonedDoc.getElementById("quotation-document");
+                if (clone) {
+                    clone.style.height = `${clone.scrollHeight}px`;
+                }
+            }
         },
         jsPDF: { 
             unit: 'mm', 
