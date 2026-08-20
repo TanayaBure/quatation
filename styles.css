@@ -1080,6 +1080,13 @@ body.pdf-rendering {
     background-color: white !important;
 }
 
+body.pdf-rendering .app-container {
+    height: auto !important;
+    width: auto !important;
+    display: block !important;
+    overflow: visible !important;
+}
+
 body.pdf-rendering .editor-panel {
     display: none !important;
 }
