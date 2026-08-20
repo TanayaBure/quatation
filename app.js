@@ -478,10 +478,11 @@ function downloadPDF() {
     // Clone the element to avoid viewport/scaling/clipping issues
     const clone = docElement.cloneNode(true);
     
-    // Position it absolutely far off-screen, set to exact A4 width with no constraints/transforms
-    clone.style.position = "absolute";
-    clone.style.left = "-9999px";
+    // Position it fixed behind the main content (inside the viewport bounds so html2canvas renders it)
+    clone.style.position = "fixed";
+    clone.style.left = "0";
     clone.style.top = "0";
+    clone.style.zIndex = "-9999";
     clone.style.width = "210mm";
     clone.style.height = "auto";
     clone.style.minHeight = "297mm";
