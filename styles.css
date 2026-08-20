@@ -1070,6 +1070,45 @@ textarea {
     }
 }
 
+/* Layout overrides during PDF rendering to prevent scaling, shifting, or viewport clipping */
+body.pdf-rendering {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    width: auto !important;
+    background-color: white !important;
+}
+
+body.pdf-rendering .editor-panel {
+    display: none !important;
+}
+
+body.pdf-rendering .preview-panel {
+    width: 100% !important;
+    height: auto !important;
+    display: flex !important;
+    overflow: visible !important;
+    background-color: white !important;
+}
+
+body.pdf-rendering .document-workspace {
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    display: block !important; /* disable flex centering to start at (0,0) */
+}
+
+body.pdf-rendering #quotation-document {
+    transform: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+}
+
 body.pdf-rendering .page-break-indicator {
     display: none !important;
 }
