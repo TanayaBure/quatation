@@ -1015,4 +1015,69 @@ textarea {
     background-color: var(--border-dark);
 }
 
+/* --- CUSTOM PAGE BREAK & PDF RENDERING RULES --- */
+
+/* Page break inside table rows */
+.page-break-row {
+    page-break-before: always !important;
+    break-before: page !important;
+}
+
+/* Page break avoid rules to prevent text horizontal slices */
+.remarks-container,
+.remarks-list li,
+.closing-paragraph,
+.signoff-container {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+}
+
+/* Page break indicator style for live editor preview */
+.page-break-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border: 1.5px dashed #cbd5e1;
+    padding: 0.6rem;
+    margin: 0.5rem 0;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.page-break-indicator::before,
+.page-break-indicator::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #cbd5e1;
+    margin: 0 1rem;
+}
+
+/* Hide indicators during PDF rendering and Browser Print */
+@media print {
+    .page-break-indicator {
+        display: none !important;
+    }
+    .page-break-row td {
+        border: none !important;
+        padding: 0 !important;
+        height: 0 !important;
+    }
+}
+
+body.pdf-rendering .page-break-indicator {
+    display: none !important;
+}
+
+body.pdf-rendering .page-break-row td {
+    border: none !important;
+    padding: 0 !important;
+    height: 0 !important;
+}
+
 

@@ -468,22 +468,45 @@ function setupEventListeners() {
 // 7. Dynamic PDF Export using html2pdf.js
 function downloadPDF() {
     const docElement = document.getElementById("quotation-document");
+    if (!docElement) return;
     
     // Get client name for dynamic file name
     const clientSanitized = (clientNameInput.value || "Client").trim().replace(/[^a-zA-Z0-9]/g, "_");
     const refSanitized = (refNoInput.value || "Quote").trim().replace(/[^a-zA-Z0-9]/g, "_");
     const filename = `JKMaxx_Quotation_${clientSanitized}_${refSanitized}.pdf`;
 
+    // Clone the element to avoid viewport/scaling/clipping issues
+    const clone = docElement.cloneNode(true);
+    
+    // Position it absolutely far off-screen, set to exact A4 width with no constraints/transforms
+    clone.style.position = "absolute";
+    clone.style.left = "-9999px";
+    clone.style.top = "0";
+    clone.style.width = "210mm";
+    clone.style.height = "auto";
+    clone.style.minHeight = "297mm";
+    clone.style.transform = "none";
+    clone.style.transformOrigin = "initial";
+    clone.style.boxShadow = "none";
+    clone.style.margin = "0";
+
+    // Append to body so html2pdf can render it in the DOM flow
+    document.body.appendChild(clone);
+
     // html2pdf options
     const opt = {
-        margin: [10, 10, 10, 10], // standard margins
+        margin: 0, // 0 margins so A4 fits exactly with docElement padding
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
             scale: 2, // high quality
             useCORS: true, 
             logging: false,
-            letterRendering: true
+            letterRendering: true,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: 794, // 210mm in pixels at 96 DPI
+            windowHeight: clone.scrollHeight // render the full scroll height of the cloned element
         },
         jsPDF: { 
             unit: 'mm', 
@@ -499,14 +522,20 @@ function downloadPDF() {
     // Temporarily apply print classes during PDF rendering
     document.body.classList.add("pdf-rendering");
     
-    // Use html2pdf
-    html2pdf().from(docElement).set(opt).save()
+    // Use html2pdf on the clone
+    html2pdf().from(clone).set(opt).save()
         .then(() => {
             document.body.classList.remove("pdf-rendering");
+            if (clone.parentNode) {
+                document.body.removeChild(clone);
+            }
         })
         .catch(err => {
             console.error("PDF Export Error: ", err);
             document.body.classList.remove("pdf-rendering");
+            if (clone.parentNode) {
+                document.body.removeChild(clone);
+            }
             alert("Could not generate PDF. Please try the 'Browser Print' option instead.");
         });
 }
