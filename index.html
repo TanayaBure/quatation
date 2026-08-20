@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JKMaxx Paints | Interactive Quotation Studio</title>
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for high-quality editor icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="styles.css?v=3">
+    <!-- html2pdf.js library for high-fidelity client-side PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <!-- Welcome Portal Overlay -->
+    <div id="welcome-portal" class="welcome-portal">
+        <div class="welcome-card">
+            <!-- Brand Logo Header -->
+            <div class="welcome-logo-container">
+                <svg class="welcome-logo" viewBox="0 0 350 85" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Circle Segments -->
+                    <g transform="translate(5, 5)">
+                        <path d="M 38 4 C 52 4 63 12 68 25 C 57 22 46 23 37 28 C 28 33 21 42 18 53 C 7 45 1 31 1 17 C 1 9 4 4 4 4 Z" fill="#4caf50"/>
+                        <path d="M 73 37 C 73 57 57 73 37 73 C 37 73 46 60 45 46 C 43 32 32 21 18 14 C 30 6 47 6 60 14 C 68 20 73 28 73 37 Z" fill="#0066b2"/>
+                        <path d="M 4 58 C 9 66 16 71 25 73 C 44 73 60 57 60 38 C 51 41 40 41 31 36 C 22 30 16 21 13 10 C 8 21 4 33 4 44 Z" fill="#ff7f27"/>
+                    </g>
+                    <!-- Brand Text Group -->
+                    <g transform="translate(95, 20)">
+                        <text x="0" y="32" font-family="'Poppins', 'Montserrat', 'Inter', sans-serif" font-weight="800" font-size="36" fill="#0066b2" letter-spacing="-0.5">JKMaxx</text>
+                        <line x1="0" y1="46" x2="38" y2="46" stroke="#ff7f27" stroke-width="2.5" />
+                        <text x="47" y="51" font-family="'Poppins', 'Montserrat', 'Inter', sans-serif" font-weight="700" font-size="14" fill="#ff7f27" letter-spacing="4">PAINTS</text>
+                        <line x1="126" y1="46" x2="164" y2="46" stroke="#ff7f27" stroke-width="2.5" />
+                    </g>
+                </svg>
+            </div>
+            
+            <h1 class="welcome-title">Quotation & Document Studio</h1>
+            <p class="welcome-description">
+                Welcome to the professional document builder for <strong>JKMaxx Paints</strong>. Prepare, format, and generate pixel-perfect corporate quotations in real-time.
+            </p>
+            
+            <div class="welcome-options">
+                <button type="button" id="btn-start-preset" class="portal-option-btn primary-option">
+                    <div class="option-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                    <div class="option-content">
+                        <strong>Load Original Quotation</strong>
+                        <span>Populates all specifications and rate entries for Bhayaji Landge</span>
+                    </div>
+                    <i class="fa-solid fa-arrow-right arrow-next"></i>
+                </button>
+                
+                <button type="button" id="btn-start-blank" class="portal-option-btn secondary-option">
+                    <div class="option-icon"><i class="fa-solid fa-file-circle-plus"></i></div>
+                    <div class="option-content">
+                        <strong>Create Empty Quotation</strong>
+                        <span>Starts from a blank draft to write custom specifications</span>
+                    </div>
+                    <i class="fa-solid fa-arrow-right arrow-next"></i>
+                </button>
+            </div>
+            
+            <div class="welcome-footer">
+                <div class="badge"><i class="fa-solid fa-desktop"></i> Desktop View</div>
+                <div class="badge"><i class="fa-solid fa-mobile-screen"></i> Mobile Responsive</div>
+                <div class="badge"><i class="fa-solid fa-print"></i> High-Res PDF</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container app-blurred">
+        <!-- Sidebar Editor Panel -->
+        <aside class="editor-panel">
+            <header class="editor-header">
+                <div class="editor-title-group">
+                    <button id="btn-home" class="btn-home-icon" title="Return to Welcome Screen">
+                        <i class="fa-solid fa-house"></i>
+                    </button>
+                    <i class="fa-solid fa-file-invoice-dollar brand-icon"></i>
+                    <div>
+                        <h1>Quotation Studio</h1>
+                        <p>JKMaxx Paints Document Builder</p>
+                    </div>
+                </div>
+                <div class="action-buttons-quick">
+                    <button id="btn-reset" class="btn btn-secondary" title="Reset to Original PDF Data">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                    <button id="btn-clear" class="btn btn-danger-outline" title="Clear all fields">
+                        <i class="fa-solid fa-trash-can"></i> Clear
+                    </button>
+                </div>
+            </header>
+
+            <form id="editor-form" class="editor-form" onsubmit="event.preventDefault();">
+                <!-- Section: Reference & Date -->
+                <div class="form-section">
+                    <h2 class="section-title"><i class="fa-solid fa-hashtag"></i> Document Info</h2>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="ref-no">Reference No.</label>
+                            <input type="text" id="ref-no" name="ref-no" placeholder="e.g., JKMP / NGP / 26-27 /">
+                        </div>
+                        <div class="form-group">
+                            <label for="doc-date">Date</label>
+                            <input type="text" id="doc-date" name="doc-date" placeholder="e.g., 26 /06/2026">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Client Details -->
+                <div class="form-section">
+                    <h2 class="section-title"><i class="fa-solid fa-user-tie"></i> Recipient Info</h2>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="client-name">Client Name</label>
+                            <input type="text" id="client-name" name="client-name" placeholder="e.g., Bhayaji Landge">
+                        </div>
+                        <div class="form-group">
+                            <label for="client-mobile">Client Contact / Mobile</label>
+                            <input type="text" id="client-mobile" name="client-mobile" placeholder="e.g., 9823666443">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Greetings & Greetings Note -->
+                <div class="form-section">
+                    <h2 class="section-title"><i class="fa-solid fa-envelope-open-text"></i> Greeting & Opening Paragraphs</h2>
+                    <div class="form-group">
+                        <label for="dear-greeting">Greeting Salutation</label>
+                        <input type="text" id="dear-greeting" name="dear-greeting" placeholder="e.g., Dear Sir,">
+                    </div>
+                    <div class="form-group">
+                        <label for="intro-msg">Greeting Phrase</label>
+                        <input type="text" id="intro-msg" name="intro-msg" placeholder="e.g., Greetings from JK MaxX Paints,">
+                    </div>
+                    <div class="form-group">
+                        <label for="intro-p1">Paragraph 1 (Company Pitch)</label>
+                        <textarea id="intro-p1" name="intro-p1" rows="2" placeholder="JK MaxX Paints as a part of JK Cement..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="intro-p2">Paragraph 2 (Gratitude & Offer Statement)</label>
+                        <textarea id="intro-p2" name="intro-p2" rows="2" placeholder="We would like to thank you for showing interest..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Section: Products Table -->
+                <div class="form-section">
+                    <div class="section-header-flex">
+                        <h2 class="section-title"><i class="fa-solid fa-cubes"></i> Products & Pricing</h2>
+                        <button type="button" id="btn-add-product" class="btn btn-primary-sm">
+                            <i class="fa-solid fa-plus"></i> Add Product
+                        </button>
+                    </div>
+                    <div id="products-list-container" class="dynamic-rows-list">
+                        <!-- Dynamic product fields injected here by JS -->
+                    </div>
+                </div>
+
+                <!-- Section: Remarks -->
+                <div class="form-section">
+                    <div class="section-header-flex">
+                        <h2 class="section-title"><i class="fa-solid fa-list-check"></i> Remarks & Conditions</h2>
+                        <button type="button" id="btn-add-remark" class="btn btn-primary-sm">
+                            <i class="fa-solid fa-plus"></i> Add Remark
+                        </button>
+                    </div>
+                    <div id="remarks-list-container" class="dynamic-rows-list">
+                        <!-- Dynamic remark fields injected here by JS -->
+                    </div>
+                </div>
+
+                <!-- Section: Closing & Sign-off -->
+                <div class="form-section">
+                    <h2 class="section-title"><i class="fa-solid fa-signature"></i> Closing & Sign-off</h2>
+                    <div class="form-group">
+                        <label for="closing-msg">Closing Message</label>
+                        <textarea id="closing-msg" name="closing-msg" rows="2" placeholder="We trust that you will find our quote satisfactory..."></textarea>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="sign-off-company">Company Sign-off</label>
+                            <input type="text" id="sign-off-company" name="sign-off-company" placeholder="e.g., For JK MaxX Paints">
+                        </div>
+                        <div class="form-group">
+                            <label for="rep-name">Sender Name</label>
+                            <input type="text" id="rep-name" name="rep-name" placeholder="e.g., Aniket Bramnhe">
+                        </div>
+                    </div>
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label for="rep-title">Designation</label>
+                            <input type="text" id="rep-title" name="rep-title" placeholder="e.g., Demand and Generation">
+                        </div>
+                        <div class="form-group">
+                            <label for="rep-location">Location</label>
+                            <input type="text" id="rep-location" name="rep-location" placeholder="e.g., Nagpur">
+                        </div>
+                        <div class="form-group">
+                            <label for="rep-mobile">Sender Mobile</label>
+                            <input type="text" id="rep-mobile" name="rep-mobile" placeholder="e.g., Mo. No. - 90968422">
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Sticky Bottom Export Panel -->
+            <div class="export-actions">
+                <button id="btn-download-pdf" class="btn btn-accent btn-large ripple">
+                    <i class="fa-solid fa-file-pdf"></i> Download PDF
+                </button>
+                <button id="btn-print-browser" class="btn btn-secondary btn-large">
+                    <i class="fa-solid fa-print"></i> Browser Print
+                </button>
+            </div>
+        </aside>
+
+        <!-- Preview Panel -->
+        <main class="preview-panel">
+            <div class="preview-toolbar">
+                <span class="preview-badge"><i class="fa-solid fa-eye"></i> Live A4 Document Preview</span>
+                <span class="page-indicator" id="page-count-badge">Page 1 of 1</span>
+            </div>
+            
+            <div class="document-workspace">
+                <!-- A4 Letterhead Document -->
+                <div id="quotation-document" class="invoice-document">
+                    <!-- Page 1 -->
+                    <div class="document-page" data-page="1">
+                        <!-- Top Logo Section -->
+                        <div class="doc-header">
+                            <div class="logo-container">
+                                <svg class="logo-svg" viewBox="0 0 350 85" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Circle Segments -->
+                                    <g transform="translate(5, 5)">
+                                        <!-- Green Swoosh -->
+                                        <path d="M 38 4 C 52 4 63 12 68 25 C 57 22 46 23 37 28 C 28 33 21 42 18 53 C 7 45 1 31 1 17 C 1 9 4 4 4 4 Z" fill="#4caf50"/>
+                                        <!-- Blue Swoosh -->
+                                        <path d="M 73 37 C 73 57 57 73 37 73 C 37 73 46 60 45 46 C 43 32 32 21 18 14 C 30 6 47 6 60 14 C 68 20 73 28 73 37 Z" fill="#0066b2"/>
+                                        <!-- Orange Swoosh -->
+                                        <path d="M 4 58 C 9 66 16 71 25 73 C 44 73 60 57 60 38 C 51 41 40 41 31 36 C 22 30 16 21 13 10 C 8 21 4 33 4 44 Z" fill="#ff7f27"/>
+                                    </g>
+                                    <!-- Brand Text Group -->
+                                    <g transform="translate(95, 20)">
+                                        <!-- JKMaxx Main Text -->
+                                        <text x="0" y="32" font-family="'Poppins', 'Montserrat', 'Inter', sans-serif" font-weight="800" font-size="36" fill="#0066b2" letter-spacing="-0.5">JKMaxx</text>
+                                        
+                                        <!-- Flanking Lines & PAINTS -->
+                                        <line x1="0" y1="46" x2="38" y2="46" stroke="#ff7f27" stroke-width="2.5" />
+                                        <text x="47" y="51" font-family="'Poppins', 'Montserrat', 'Inter', sans-serif" font-weight="700" font-size="14" fill="#ff7f27" letter-spacing="4">PAINTS</text>
+                                        <line x1="126" y1="46" x2="164" y2="46" stroke="#ff7f27" stroke-width="2.5" />
+                                    </g>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Ref No and Date Row -->
+                        <div class="metadata-row">
+                            <div class="meta-item">
+                                <span class="meta-label">Ref. No. -</span>
+                                <span class="meta-val" id="prev-ref-no">JKMP / NGP / 26-27 /</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Date -</span>
+                                <span class="meta-val" id="prev-doc-date">26 /06/2026</span>
+                            </div>
+                        </div>
+
+                        <!-- Recipient Section -->
+                        <div class="recipient-section">
+                            <div class="to-label">To,</div>
+                            <div class="client-info-block">
+                                <strong id="prev-client-name">Bhayaji Landge</strong>
+                                <div id="prev-client-mobile">9823666443</div>
+                            </div>
+                        </div>
+
+                        <!-- Salutation & Greetings -->
+                        <div class="salutation-section">
+                            <div class="greeting-salutation" id="prev-dear-greeting">Dear Sir,</div>
+                            <div class="greeting-phrase" id="prev-intro-msg">Greetings from JK MaxX Paints,</div>
+                            <div class="pitch-text" id="prev-intro-p1">
+                                JK MaxX Paints as a part of JK Cement (Pioneer in White Cement & Wall Putty) now in Decorative Paints segment.
+                            </div>
+                            <div class="offer-text" id="prev-intro-p2">
+                                We would like to thank you for showing interest in our Products. As per our discussion, we submit here our best offer for your Nagpur.
+                            </div>
+                        </div>
+
+                        <!-- Main Quotation Products Table -->
+                        <table class="quote-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Product</th>
+                                    <th style="width: 58%;">Specification</th>
+                                    <th style="width: 17%; text-align: right;">Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prev-table-body">
+                                <!-- Dynamically populated table rows -->
+                            </tbody>
+                        </table>
+
+                        <!-- Remarks and Closing section -->
+                        <!-- If content overflows A4 height, page-breaking is handled in JS/CSS dynamically -->
+                        <div class="document-footer-section">
+                            <div class="remarks-container">
+                                <div class="remarks-title">Remarks :-</div>
+                                <ol class="remarks-list" id="prev-remarks-list">
+                                    <!-- Dynamically populated remarks -->
+                                </ol>
+                            </div>
+
+                            <div class="closing-paragraph" id="prev-closing-msg">
+                                We trust that you will find our quote satisfactory and look forward to working with you. Please contact us should you have any questions at all.
+                            </div>
+
+                            <div class="signoff-container">
+                                <div class="regards-label">Regards,</div>
+                                <div class="company-signoff" id="prev-sign-off-company">For JK MaxX Paints</div>
+                                <div class="signoff-details">
+                                    <strong id="prev-rep-name">Aniket Bramnhe</strong>
+                                    <div id="prev-rep-title">Demand and Generation</div>
+                                    <div id="prev-rep-location">Nagpur</div>
+                                    <div id="prev-rep-mobile">Mo. No. - 90968422</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Tabs Navigation -->
+    <div class="mobile-tabs">
+        <button id="tab-btn-edit" class="mobile-tab-btn active">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>Edit</span>
+        </button>
+        <button id="tab-btn-preview" class="mobile-tab-btn">
+            <i class="fa-solid fa-eye"></i>
+            <span>Preview</span>
+        </button>
+    </div>
+    
+    <!-- Application logic scripting -->
+    <script src="app.js?v=3"></script>
+</body>
+</html>
