@@ -475,24 +475,17 @@ function downloadPDF() {
     const refSanitized = (refNoInput.value || "Quote").trim().replace(/[^a-zA-Z0-9]/g, "_");
     const filename = `JKMaxx_Quotation_${clientSanitized}_${refSanitized}.pdf`;
 
-    // Clone the element to avoid viewport/scaling/clipping issues
-    const clone = docElement.cloneNode(true);
-    
-    // Position it fixed behind the main content (inside the viewport bounds so html2canvas renders it)
-    clone.style.position = "fixed";
-    clone.style.left = "0";
-    clone.style.top = "0";
-    clone.style.zIndex = "-9999";
-    clone.style.width = "210mm";
-    clone.style.height = "auto";
-    clone.style.minHeight = "297mm";
-    clone.style.transform = "none";
-    clone.style.transformOrigin = "initial";
-    clone.style.boxShadow = "none";
-    clone.style.margin = "0";
+    // Save active inline styles of the live element to prevent layout jump issues
+    const prevTransform = docElement.style.transform;
+    const prevTransformOrigin = docElement.style.transformOrigin;
+    const prevMarginBottom = docElement.style.marginBottom;
+    const prevBoxShadow = docElement.style.boxShadow;
 
-    // Append to body so html2pdf can render it in the DOM flow
-    document.body.appendChild(clone);
+    // Temporarily reset styles to 100% full-scale for clean high-fidelity print
+    docElement.style.transform = "none";
+    docElement.style.transformOrigin = "initial";
+    docElement.style.marginBottom = "0";
+    docElement.style.boxShadow = "none";
 
     // html2pdf options
     const opt = {
@@ -506,8 +499,7 @@ function downloadPDF() {
             letterRendering: true,
             scrollX: 0,
             scrollY: 0,
-            windowWidth: 794, // 210mm in pixels at 96 DPI
-            windowHeight: clone.scrollHeight // render the full scroll height of the cloned element
+            windowWidth: 794 // Force html2canvas viewport width to match A4 width (210mm)
         },
         jsPDF: { 
             unit: 'mm', 
@@ -523,20 +515,24 @@ function downloadPDF() {
     // Temporarily apply print classes during PDF rendering
     document.body.classList.add("pdf-rendering");
     
-    // Use html2pdf on the clone
-    html2pdf().from(clone).set(opt).save()
+    // Use html2pdf on the live element
+    html2pdf().from(docElement).set(opt).save()
         .then(() => {
             document.body.classList.remove("pdf-rendering");
-            if (clone.parentNode) {
-                document.body.removeChild(clone);
-            }
+            // Restore original styles
+            docElement.style.transform = prevTransform;
+            docElement.style.transformOrigin = prevTransformOrigin;
+            docElement.style.marginBottom = prevMarginBottom;
+            docElement.style.boxShadow = prevBoxShadow;
         })
         .catch(err => {
             console.error("PDF Export Error: ", err);
             document.body.classList.remove("pdf-rendering");
-            if (clone.parentNode) {
-                document.body.removeChild(clone);
-            }
+            // Restore original styles
+            docElement.style.transform = prevTransform;
+            docElement.style.transformOrigin = prevTransformOrigin;
+            docElement.style.marginBottom = prevMarginBottom;
+            docElement.style.boxShadow = prevBoxShadow;
             alert("Could not generate PDF. Please try the 'Browser Print' option instead.");
         });
 }
