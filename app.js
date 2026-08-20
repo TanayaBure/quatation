@@ -64,6 +64,27 @@ const originalPreset = {
 // 2. Active Application State
 let activeState = JSON.parse(JSON.stringify(originalPreset));
 
+// Helper functions for security and performance (CodeRabbit Review Fixes)
+function escapeHTML(str) {
+    if (!str) return "";
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+const debouncedUpdatePreview = debounce(updatePreview, 150);
+
 // 3. Select DOM Elements
 const refNoInput = document.getElementById("ref-no");
 const docDateInput = document.getElementById("doc-date");
@@ -169,17 +190,14 @@ function updatePreview() {
     activeState.products.forEach((prod, index) => {
         const tr = document.createElement("tr");
         
-        // Escape special chars and replace newlines with line breaks in specifications
-        const formattedSpec = (prod.specification || "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\n/g, "<br>");
+        const escapedName = escapeHTML(prod.name || "");
+        const escapedRate = escapeHTML(prod.rate || "");
+        const formattedSpec = escapeHTML(prod.specification || "").replace(/\n/g, "<br>");
 
         tr.innerHTML = `
-            <td><strong>${prod.name || ""}</strong></td>
+            <td><strong>${escapedName}</strong></td>
             <td>${formattedSpec}</td>
-            <td>${prod.rate || ""}</td>
+            <td>${escapedRate}</td>
         `;
         prevTableBody.appendChild(tr);
 
@@ -220,38 +238,50 @@ function renderProductsEditor() {
         div.innerHTML = `
             <div class="row-editor-header">
                 <span class="row-index-badge">Product #${index + 1}</span>
-                <button type="button" class="btn-remove-row" onclick="removeProduct(${index})" title="Remove Product">
+                <button type="button" class="btn-remove-row" title="Remove Product">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
             <div class="form-group">
                 <label>Product Name</label>
-                <input type="text" class="prod-name-field" value="${prod.name || ""}" data-index="${index}">
+                <input type="text" class="prod-name-field" data-index="${index}">
             </div>
             <div class="form-group">
                 <label>Specification</label>
-                <textarea class="prod-spec-field" rows="2" data-index="${index}">${prod.specification || ""}</textarea>
+                <textarea class="prod-spec-field" rows="2" data-index="${index}"></textarea>
             </div>
             <div class="form-grid-2">
                 <div class="form-group">
                     <label>Rate (e.g. 1800/-)</label>
-                    <input type="text" class="prod-rate-field" value="${prod.rate || ""}" data-index="${index}">
+                    <input type="text" class="prod-rate-field" data-index="${index}">
                 </div>
                 <div class="form-group" style="flex-direction: row; align-items: center; gap: 0.5rem; justify-content: flex-start; margin-top: 1.2rem;">
-                    <input type="checkbox" id="break-after-${index}" class="prod-break-field" ${prod.pageBreakAfter ? "checked" : ""} data-index="${index}">
+                    <input type="checkbox" id="break-after-${index}" class="prod-break-field" data-index="${index}">
                     <label for="break-after-${index}" style="margin: 0; cursor: pointer; text-transform: none;">Page Break After</label>
                 </div>
             </div>
         `;
+        
+        // Safely set attributes programmatically (prevents Attribute Injection XSS)
+        div.querySelector(".prod-name-field").value = prod.name || "";
+        div.querySelector(".prod-spec-field").value = prod.specification || "";
+        div.querySelector(".prod-rate-field").value = prod.rate || "";
+        div.querySelector(".prod-break-field").checked = !!prod.pageBreakAfter;
+        
+        // Bind dynamic listeners directly to prevent Global Scope Pollution
+        div.querySelector(".btn-remove-row").addEventListener("click", () => {
+            removeProduct(index);
+        });
+
         productsContainer.appendChild(div);
     });
 
-    // Rebind events to dynamic inputs
+    // Rebind events to dynamic inputs using debounced preview updates
     document.querySelectorAll(".prod-name-field").forEach(input => {
         input.addEventListener("input", (e) => {
             const idx = e.target.dataset.index;
             activeState.products[idx].name = e.target.value;
-            updatePreview();
+            debouncedUpdatePreview();
         });
     });
 
@@ -259,7 +289,7 @@ function renderProductsEditor() {
         textarea.addEventListener("input", (e) => {
             const idx = e.target.dataset.index;
             activeState.products[idx].specification = e.target.value;
-            updatePreview();
+            debouncedUpdatePreview();
         });
     });
 
@@ -267,7 +297,7 @@ function renderProductsEditor() {
         input.addEventListener("input", (e) => {
             const idx = e.target.dataset.index;
             activeState.products[idx].rate = e.target.value;
-            updatePreview();
+            debouncedUpdatePreview();
         });
     });
 
@@ -275,7 +305,7 @@ function renderProductsEditor() {
         checkbox.addEventListener("change", (e) => {
             const idx = e.target.dataset.index;
             activeState.products[idx].pageBreakAfter = e.target.checked;
-            updatePreview();
+            debouncedUpdatePreview();
         });
     });
 }
@@ -310,23 +340,32 @@ function renderRemarksEditor() {
         div.innerHTML = `
             <div class="row-editor-header">
                 <span class="row-index-badge">Remark #${index + 1}</span>
-                <button type="button" class="btn-remove-row" onclick="removeRemark(${index})" title="Remove Remark">
+                <button type="button" class="btn-remove-row" title="Remove Remark">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
             <div class="form-group">
-                <textarea class="remark-text-field" rows="2" data-index="${index}">${rem || ""}</textarea>
+                <textarea class="remark-text-field" rows="2" data-index="${index}"></textarea>
             </div>
         `;
+        
+        // Safely set attributes programmatically (prevents Attribute Injection XSS)
+        div.querySelector(".remark-text-field").value = rem || "";
+        
+        // Bind dynamic listeners directly to prevent Global Scope Pollution
+        div.querySelector(".btn-remove-row").addEventListener("click", () => {
+            removeRemark(index);
+        });
+
         remarksContainer.appendChild(div);
     });
 
-    // Rebind events to dynamic remark inputs
+    // Rebind events to dynamic remark inputs using debounced preview updates
     document.querySelectorAll(".remark-text-field").forEach(textarea => {
         textarea.addEventListener("input", (e) => {
             const idx = e.target.dataset.index;
             activeState.remarks[idx] = e.target.value;
-            updatePreview();
+            debouncedUpdatePreview();
         });
     });
 }
@@ -378,7 +417,7 @@ function setupEventListeners() {
     coreInputs.forEach(item => {
         item.el.addEventListener("input", (e) => {
             activeState[item.key] = e.target.value;
-            updatePreview();
+            debouncedUpdatePreview();
         });
     });
 
