@@ -475,13 +475,28 @@ function downloadPDF() {
     const refSanitized = (refNoInput.value || "Quote").trim().replace(/[^a-zA-Z0-9]/g, "_");
     const filename = `JKMaxx_Quotation_${clientSanitized}_${refSanitized}.pdf`;
 
-    // Save active inline styles of the live element to prevent layout jump issues
+    // Save active parent and sibling to restore DOM position later
+    const originalParent = docElement.parentNode;
+    const originalSibling = docElement.nextSibling;
+
+    // Save active inline styles of the live element
+    const prevPosition = docElement.style.position;
+    const prevLeft = docElement.style.left;
+    const prevTop = docElement.style.top;
+    const prevZIndex = docElement.style.zIndex;
     const prevTransform = docElement.style.transform;
     const prevTransformOrigin = docElement.style.transformOrigin;
     const prevMarginBottom = docElement.style.marginBottom;
     const prevBoxShadow = docElement.style.boxShadow;
 
-    // Temporarily reset styles to 100% full-scale for clean high-fidelity print
+    // Move to body and position it at (0,0) behind the main content (z-index: -1)
+    // This allows html2canvas to render it in a standard virtual viewport without cropping/shifting
+    document.body.appendChild(docElement);
+    
+    docElement.style.position = "absolute";
+    docElement.style.left = "0";
+    docElement.style.top = "0";
+    docElement.style.zIndex = "-1";
     docElement.style.transform = "none";
     docElement.style.transformOrigin = "initial";
     docElement.style.marginBottom = "0";
@@ -514,25 +529,42 @@ function downloadPDF() {
 
     // Temporarily apply print classes during PDF rendering
     document.body.classList.add("pdf-rendering");
+
+    // Restore function to revert DOM changes
+    const restoreDOM = () => {
+        document.body.classList.remove("pdf-rendering");
+        
+        // Restore DOM position
+        if (originalSibling) {
+            originalParent.insertBefore(docElement, originalSibling);
+        } else {
+            originalParent.appendChild(docElement);
+        }
+
+        // Restore styles
+        docElement.style.position = prevPosition;
+        docElement.style.left = prevLeft;
+        docElement.style.top = prevTop;
+        docElement.style.zIndex = prevZIndex;
+        docElement.style.transform = prevTransform;
+        docElement.style.transformOrigin = prevTransformOrigin;
+        docElement.style.marginBottom = prevMarginBottom;
+        docElement.style.boxShadow = prevBoxShadow;
+        
+        // Trigger scale preview to ensure layout is correctly recalculated
+        if (typeof scalePreview === "function") {
+            scalePreview();
+        }
+    };
     
-    // Use html2pdf on the live element
+    // Use html2pdf on the relocated element
     html2pdf().from(docElement).set(opt).save()
         .then(() => {
-            document.body.classList.remove("pdf-rendering");
-            // Restore original styles
-            docElement.style.transform = prevTransform;
-            docElement.style.transformOrigin = prevTransformOrigin;
-            docElement.style.marginBottom = prevMarginBottom;
-            docElement.style.boxShadow = prevBoxShadow;
+            restoreDOM();
         })
         .catch(err => {
             console.error("PDF Export Error: ", err);
-            document.body.classList.remove("pdf-rendering");
-            // Restore original styles
-            docElement.style.transform = prevTransform;
-            docElement.style.transformOrigin = prevTransformOrigin;
-            docElement.style.marginBottom = prevMarginBottom;
-            docElement.style.boxShadow = prevBoxShadow;
+            restoreDOM();
             alert("Could not generate PDF. Please try the 'Browser Print' option instead.");
         });
 }
