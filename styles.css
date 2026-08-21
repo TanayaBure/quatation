@@ -453,8 +453,17 @@ textarea {
     border-radius: 4px;
 }
 
-/* --- THE A4 PRINT SHEET --- */
+/* --- THE A4 PRINT SHEET & MULTI-PAGE SYSTEM --- */
 .invoice-document {
+    background-color: transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    align-items: center;
+    width: auto;
+}
+
+.document-page {
     background-color: white;
     width: 210mm; /* A4 width */
     min-height: 297mm; /* A4 height */
@@ -464,24 +473,64 @@ textarea {
     position: relative;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Page break styling for PDF & Print */
+.document-page.pdf-page-break {
+    page-break-before: always !important;
+    break-before: page !important;
+}
+
+.page-continuation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1.5px solid var(--doc-border);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.page-continuation-header .brand-mini {
+    color: #0066b2;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.page-continuation-header .brand-mini span {
+    color: #ff7f27;
+}
+
+.page-continuation-header .page-num {
+    color: #64748b;
+    font-weight: 600;
+    font-size: 9pt;
 }
 
 /* Document Inner Styles */
 .doc-header {
     display: flex;
     justify-content: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.75rem;
 }
 
 .logo-container {
     width: 100%;
     display: flex;
     justify-content: center;
+    align-items: center;
 }
 
 .logo-svg {
     height: 75px;
-    width: auto;
+    width: 310px;
+    max-width: 100%;
+    display: block;
 }
 
 /* Ref & Date styling */
@@ -490,7 +539,7 @@ textarea {
     justify-content: space-between;
     font-size: 11pt;
     font-weight: 700;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
 }
 
 .meta-label {

@@ -21,7 +21,7 @@
         <div class="welcome-card">
             <!-- Brand Logo Header -->
             <div class="welcome-logo-container">
-                <svg class="welcome-logo" viewBox="0 0 350 85" xmlns="http://www.w3.org/2000/svg">
+                <svg class="welcome-logo" width="350" height="85" viewBox="0 0 350 85" xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
                     <!-- Circle Segments -->
                     <g transform="translate(5, 5)">
                         <path d="M 38 4 C 52 4 63 12 68 25 C 57 22 46 23 37 28 C 28 33 21 42 18 53 C 7 45 1 31 1 17 C 1 9 4 4 4 4 Z" fill="#4caf50"/>
@@ -224,111 +224,8 @@
             </div>
             
             <div class="document-workspace">
-                <!-- A4 Letterhead Document -->
-                <div id="quotation-document" class="invoice-document">
-                    <!-- Page 1 -->
-                    <div class="document-page" data-page="1">
-                        <!-- Top Logo Section -->
-                        <div class="doc-header">
-                            <div class="logo-container">
-                                <svg class="logo-svg" viewBox="0 0 350 85" xmlns="http://www.w3.org/2000/svg">
-                                    <!-- Circle Segments -->
-                                    <g transform="translate(5, 5)">
-                                        <!-- Green Swoosh -->
-                                        <path d="M 38 4 C 52 4 63 12 68 25 C 57 22 46 23 37 28 C 28 33 21 42 18 53 C 7 45 1 31 1 17 C 1 9 4 4 4 4 Z" fill="#4caf50"/>
-                                        <!-- Blue Swoosh -->
-                                        <path d="M 73 37 C 73 57 57 73 37 73 C 37 73 46 60 45 46 C 43 32 32 21 18 14 C 30 6 47 6 60 14 C 68 20 73 28 73 37 Z" fill="#0066b2"/>
-                                        <!-- Orange Swoosh -->
-                                        <path d="M 4 58 C 9 66 16 71 25 73 C 44 73 60 57 60 38 C 51 41 40 41 31 36 C 22 30 16 21 13 10 C 8 21 4 33 4 44 Z" fill="#ff7f27"/>
-                                    </g>
-                                    <!-- Brand Text Group -->
-                                    <g transform="translate(95, 20)">
-                                        <!-- JKMaxx Main Text -->
-                                        <text x="0" y="32" font-family="'Poppins', 'Montserrat', 'Inter', sans-serif" font-weight="800" font-size="36" fill="#0066b2" letter-spacing="-0.5">JKMaxx</text>
-                                        
-                                        <!-- Flanking Lines & PAINTS -->
-                                        <line x1="0" y1="46" x2="38" y2="46" stroke="#ff7f27" stroke-width="2.5" />
-                                        <text x="47" y="51" font-family="'Poppins', 'Montserrat', 'Inter', sans-serif" font-weight="700" font-size="14" fill="#ff7f27" letter-spacing="4">PAINTS</text>
-                                        <line x1="126" y1="46" x2="164" y2="46" stroke="#ff7f27" stroke-width="2.5" />
-                                    </g>
-                                </svg>
-                            </div>
-                        </div>
-
-                        <!-- Ref No and Date Row -->
-                        <div class="metadata-row">
-                            <div class="meta-item">
-                                <span class="meta-label">Ref. No. -</span>
-                                <span class="meta-val" id="prev-ref-no">JKMP / NGP / 26-27 /</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">Date -</span>
-                                <span class="meta-val" id="prev-doc-date">26 /06/2026</span>
-                            </div>
-                        </div>
-
-                        <!-- Recipient Section -->
-                        <div class="recipient-section">
-                            <div class="to-label">To,</div>
-                            <div class="client-info-block">
-                                <strong id="prev-client-name">Bhayaji Landge</strong>
-                                <div id="prev-client-mobile">9823666443</div>
-                            </div>
-                        </div>
-
-                        <!-- Salutation & Greetings -->
-                        <div class="salutation-section">
-                            <div class="greeting-salutation" id="prev-dear-greeting">Dear Sir,</div>
-                            <div class="greeting-phrase" id="prev-intro-msg">Greetings from JK MaxX Paints,</div>
-                            <div class="pitch-text" id="prev-intro-p1">
-                                JK MaxX Paints as a part of JK Cement (Pioneer in White Cement & Wall Putty) now in Decorative Paints segment.
-                            </div>
-                            <div class="offer-text" id="prev-intro-p2">
-                                We would like to thank you for showing interest in our Products. As per our discussion, we submit here our best offer for your Nagpur.
-                            </div>
-                        </div>
-
-                        <!-- Main Quotation Products Table -->
-                        <table class="quote-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 25%;">Product</th>
-                                    <th style="width: 58%;">Specification</th>
-                                    <th style="width: 17%; text-align: right;">Rate</th>
-                                </tr>
-                            </thead>
-                            <tbody id="prev-table-body">
-                                <!-- Dynamically populated table rows -->
-                            </tbody>
-                        </table>
-
-                        <!-- Remarks and Closing section -->
-                        <!-- If content overflows A4 height, page-breaking is handled in JS/CSS dynamically -->
-                        <div class="document-footer-section">
-                            <div class="remarks-container">
-                                <div class="remarks-title">Remarks :-</div>
-                                <ol class="remarks-list" id="prev-remarks-list">
-                                    <!-- Dynamically populated remarks -->
-                                </ol>
-                            </div>
-
-                            <div class="closing-paragraph" id="prev-closing-msg">
-                                We trust that you will find our quote satisfactory and look forward to working with you. Please contact us should you have any questions at all.
-                            </div>
-
-                            <div class="signoff-container">
-                                <div class="regards-label">Regards,</div>
-                                <div class="company-signoff" id="prev-sign-off-company">For JK MaxX Paints</div>
-                                <div class="signoff-details">
-                                    <strong id="prev-rep-name">Aniket Bramnhe</strong>
-                                    <div id="prev-rep-title">Demand and Generation</div>
-                                    <div id="prev-rep-location">Nagpur</div>
-                                    <div id="prev-rep-mobile">Mo. No. - 90968422</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- A4 Letterhead Document (Populated Dynamically as A4 Pages) -->
+                <div id="quotation-document" class="invoice-document"></div>
             </div>
         </main>
     </div>

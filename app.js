@@ -166,66 +166,234 @@ function loadState(state) {
     updatePreview();
 }
 
-// 5. Update Preview Content dynamically
-function updatePreview() {
-    // Basic Text Fields
-    prevRefNo.textContent = refNoInput.value;
-    prevDocDate.textContent = docDateInput.value;
-    prevClientName.textContent = clientNameInput.value;
-    prevClientMobile.textContent = clientMobileInput.value;
-    prevDearGreeting.textContent = dearGreetingInput.value;
-    prevIntroMsg.textContent = introMsgInput.value;
-    prevIntroP1.textContent = introP1Input.value;
-    prevIntroP2.textContent = introP2Input.value;
-    prevClosingMsg.textContent = closingMsgInput.value;
-    prevSignOffCompany.textContent = signOffCompanyInput.value;
-    prevRepName.textContent = repNameInput.value;
-    prevRepTitle.textContent = repTitleInput.value;
-    prevRepLocation.textContent = repLocationInput.value;
-    prevRepMobile.textContent = repMobileInput.value;
+// Helper to generate crisp, high-resolution vector SVG company logo
+function getLogoSVGHTML() {
+    return `
+        <div class="doc-header">
+            <div class="logo-container">
+                <svg class="logo-svg" width="350" height="85" viewBox="0 0 350 85" xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+                    <!-- Circle Segments -->
+                    <g transform="translate(5, 5)">
+                        <path d="M 38 4 C 52 4 63 12 68 25 C 57 22 46 23 37 28 C 28 33 21 42 18 53 C 7 45 1 31 1 17 C 1 9 4 4 4 4 Z" fill="#4caf50"/>
+                        <path d="M 73 37 C 73 57 57 73 37 73 C 37 73 46 60 45 46 C 43 32 32 21 18 14 C 30 6 47 6 60 14 C 68 20 73 28 73 37 Z" fill="#0066b2"/>
+                        <path d="M 4 58 C 9 66 16 71 25 73 C 44 73 60 57 60 38 C 51 41 40 41 31 36 C 22 30 16 21 13 10 C 8 21 4 33 4 44 Z" fill="#ff7f27"/>
+                    </g>
+                    <!-- Brand Text Group -->
+                    <g transform="translate(95, 20)">
+                        <text x="0" y="32" font-family="'Poppins', 'Montserrat', 'Inter', sans-serif" font-weight="800" font-size="36" fill="#0066b2" letter-spacing="-0.5">JKMaxx</text>
+                        <line x1="0" y1="46" x2="38" y2="46" stroke="#ff7f27" stroke-width="2.5" />
+                        <text x="47" y="51" font-family="'Poppins', 'Montserrat', 'Inter', sans-serif" font-weight="700" font-size="14" fill="#ff7f27" letter-spacing="4">PAINTS</text>
+                        <line x1="126" y1="46" x2="164" y2="46" stroke="#ff7f27" stroke-width="2.5" />
+                    </g>
+                </svg>
+            </div>
+        </div>
+    `;
+}
 
-    // Render Table Content
-    prevTableBody.innerHTML = "";
+// Calculate row height dynamically to prevent splitting
+function estimateRowHeight(prod) {
+    const spec = prod.specification || "";
+    const specLines = spec.split("\n").reduce((acc, line) => acc + Math.max(1, Math.ceil(line.length / 50)), 0);
+    const nameLines = Math.max(1, Math.ceil((prod.name || "").length / 25));
+    const maxLines = Math.max(specLines, nameLines);
+    return Math.max(48, maxLines * 19 + 25);
+}
+
+// Dynamic Multi-Page Pagination Calculation
+function paginateQuotation() {
+    // Standard usable height per A4 page (297mm - 40mm margins ≈ 965px at 96 DPI)
+    const pageMaxHeight = 965;
+    const p1TopContentHeight = 345; // Logo + Metadata + Recipient + Salutation
+    const theadHeight = 42; // Table header row
+    const footerBlockHeight = 265; // Remarks + Closing message + Sign-off
+
+    const pages = [];
+    let currentPage = {
+        pageNumber: 1,
+        products: [],
+        hasHeader: true,
+        hasFooter: false,
+        usedHeight: p1TopContentHeight + theadHeight
+    };
+
     activeState.products.forEach((prod, index) => {
-        const tr = document.createElement("tr");
-        
-        const escapedName = escapeHTML(prod.name || "");
-        const escapedRate = escapeHTML(prod.rate || "");
-        const formattedSpec = escapeHTML(prod.specification || "").replace(/\n/g, "<br>");
+        const rowHeight = estimateRowHeight(prod);
+        const prevProd = index > 0 ? activeState.products[index - 1] : null;
+        const forceBreak = prevProd && prevProd.pageBreakAfter;
+        const exceeds = (currentPage.usedHeight + rowHeight) > pageMaxHeight;
 
-        tr.innerHTML = `
-            <td><strong>${escapedName}</strong></td>
-            <td>${formattedSpec}</td>
-            <td>${escapedRate}</td>
-        `;
-        prevTableBody.appendChild(tr);
+        if ((forceBreak || exceeds) && currentPage.products.length > 0) {
+            pages.push(currentPage);
+            currentPage = {
+                pageNumber: pages.length + 1,
+                products: [],
+                hasHeader: false,
+                hasFooter: false,
+                usedHeight: theadHeight + 35 // includes top continuation header
+            };
+        }
 
-        // Inject page break if toggled
-        if (prod.pageBreakAfter) {
-            const trBreak = document.createElement("tr");
-            trBreak.className = "page-break-row";
-            trBreak.innerHTML = `
-                <td colspan="3">
-                    <div class="page-break-indicator">
-                        <span>PAGE BREAK</span>
+        currentPage.products.push({ ...prod, originalIndex: index });
+        currentPage.usedHeight += rowHeight;
+    });
+
+    // Check if footer block fits on current page
+    if (currentPage.usedHeight + footerBlockHeight <= pageMaxHeight) {
+        currentPage.hasFooter = true;
+        pages.push(currentPage);
+    } else {
+        pages.push(currentPage);
+        pages.push({
+            pageNumber: pages.length + 1,
+            products: [],
+            hasHeader: false,
+            hasFooter: true,
+            usedHeight: footerBlockHeight + 35
+        });
+    }
+
+    return pages;
+}
+
+// 5. Update Preview Content dynamically across multi-page A4 sheets
+function updatePreview() {
+    const docContainer = document.getElementById("quotation-document");
+    if (!docContainer) return;
+
+    const pages = paginateQuotation();
+    const totalPages = pages.length;
+
+    // Field values
+    const refNo = escapeHTML(refNoInput.value || "JKMP / NGP / 26-27 /");
+    const docDate = escapeHTML(docDateInput.value || "26 /06/2026");
+    const clientName = escapeHTML(clientNameInput.value || "Bhayaji Landge");
+    const clientMobile = escapeHTML(clientMobileInput.value || "9823666443");
+    const dearGreeting = escapeHTML(dearGreetingInput.value || "Dear Sir,");
+    const introMsg = escapeHTML(introMsgInput.value || "Greetings from JK MaxX Paints ,");
+    const introP1 = escapeHTML(introP1Input.value || "JK MaxX Paints as a part of JK Cement (Pioneer in White Cement & Wall Putty) now in Decorative Paints segment.");
+    const introP2 = escapeHTML(introP2Input.value || "We would like to thank you for showing interest in our Products. As per our discussion, we submit here our best offer for your Nagpur.");
+    const closingMsg = escapeHTML(closingMsgInput.value || "We trust that you will find our quote satisfactory and look forward to working with you. Please contact us should you have any questions at all.");
+    const signOffCompany = escapeHTML(signOffCompanyInput.value || "For JK MaxX Paints");
+    const repName = escapeHTML(repNameInput.value || "Aniket Bramnhe");
+    const repTitle = escapeHTML(repTitleInput.value || "Demand and Generation");
+    const repLocation = escapeHTML(repLocationInput.value || "Nagpur");
+    const repMobile = escapeHTML(repMobileInput.value || "Mo. No. - 90968422");
+
+    // Remarks HTML
+    const validRemarks = activeState.remarks.filter(r => r.trim() !== "");
+    const remarksHTML = validRemarks.length > 0 ? `
+        <div class="remarks-container">
+            <div class="remarks-title">Remarks :-</div>
+            <ol class="remarks-list">
+                ${validRemarks.map(r => `<li>${escapeHTML(r)}</li>`).join("")}
+            </ol>
+        </div>
+    ` : "";
+
+    // Footer block HTML
+    const footerHTML = `
+        <div class="document-footer-section">
+            ${remarksHTML}
+            <div class="closing-paragraph">${closingMsg}</div>
+            <div class="signoff-container">
+                <div class="regards-label">Regards,</div>
+                <div class="company-signoff">${signOffCompany}</div>
+                <div class="signoff-details">
+                    <strong>${repName}</strong>
+                    <div>${repTitle}</div>
+                    <div>${repLocation}</div>
+                    <div>${repMobile}</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    docContainer.innerHTML = "";
+
+    pages.forEach((page, pIdx) => {
+        const pageEl = document.createElement("div");
+        pageEl.className = "document-page" + (pIdx > 0 ? " pdf-page-break" : "");
+        pageEl.dataset.page = page.pageNumber;
+
+        let pageContent = "";
+
+        if (page.pageNumber === 1) {
+            // Page 1: Logo Header + Metadata + Recipient + Salutations
+            pageContent += `
+                ${getLogoSVGHTML()}
+                <div class="metadata-row">
+                    <div class="meta-item"><span class="meta-label">Ref. No. -</span> <span class="meta-val">${refNo}</span></div>
+                    <div class="meta-item"><span class="meta-label">Date -</span> <span class="meta-val">${docDate}</span></div>
+                </div>
+                <div class="recipient-section">
+                    <div class="to-label">To,</div>
+                    <div class="client-info-block">
+                        <strong>${clientName}</strong>
+                        <div>${clientMobile}</div>
                     </div>
-                </td>
+                </div>
+                <div class="salutation-section">
+                    <div class="greeting-salutation">${dearGreeting}</div>
+                    <div class="greeting-phrase">${introMsg}</div>
+                    <div class="pitch-text">${introP1}</div>
+                    <div class="offer-text">${introP2}</div>
+                </div>
             `;
-            prevTableBody.appendChild(trBreak);
+        } else {
+            // Subsequent Pages: Proper Top Margin + Continuation Header
+            pageContent += `
+                <div class="page-continuation-header">
+                    <div class="brand-mini">JKMaxx <span>PAINTS</span> — Quotation Ref: ${refNo}</div>
+                    <div class="page-num">Page ${page.pageNumber} of ${totalPages}</div>
+                </div>
+            `;
         }
+
+        // Render Table if this page has products with REPEATED THEAD
+        if (page.products.length > 0) {
+            let tableRowsHTML = "";
+            page.products.forEach(prod => {
+                const escapedName = escapeHTML(prod.name || "");
+                const escapedRate = escapeHTML(prod.rate || "");
+                const formattedSpec = escapeHTML(prod.specification || "").replace(/\n/g, "<br>");
+
+                tableRowsHTML += `
+                    <tr>
+                        <td style="width: 25%;"><strong>${escapedName}</strong></td>
+                        <td style="width: 58%;">${formattedSpec}</td>
+                        <td style="width: 17%; text-align: right;">${escapedRate}</td>
+                    </tr>
+                `;
+            });
+
+            pageContent += `
+                <table class="quote-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Product</th>
+                            <th style="width: 58%;">Specification</th>
+                            <th style="width: 17%; text-align: right;">Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRowsHTML}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Render Footer if assigned to this page
+        if (page.hasFooter) {
+            pageContent += footerHTML;
+        }
+
+        pageEl.innerHTML = pageContent;
+        docContainer.appendChild(pageEl);
     });
 
-    // Render Remarks List
-    prevRemarksList.innerHTML = "";
-    activeState.remarks.forEach(rem => {
-        if (rem.trim() !== "") {
-            const li = document.createElement("li");
-            li.textContent = rem;
-            prevRemarksList.appendChild(li);
-        }
-    });
-
-    updatePageIndicator();
+    pageCountBadge.textContent = `Page 1 of ${totalPages} (${totalPages} Page${totalPages > 1 ? 's' : ''})`;
+    scalePreview();
 }
 
 // Render product row editors in sidebar
@@ -619,7 +787,7 @@ async function downloadPDF() {
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
-            scale: 2, // High resolution (300 DPI equivalent) for crisp logos and text
+            scale: 2.5, // 300+ DPI Retina rendering for ultra-sharp vector SVG logo and fonts
             useCORS: true,
             allowTaint: true,
             logging: false,
@@ -635,11 +803,18 @@ async function downloadPDF() {
                 const clonedQuotation = clonedDoc.getElementById("quotation-document-clone") || clonedDoc.getElementById("quotation-document");
                 if (clonedQuotation) {
                     clonedQuotation.style.width = "794px";
-                    clonedQuotation.style.height = `${clonedQuotation.scrollHeight}px`;
                     clonedQuotation.style.overflow = "visible";
                     clonedQuotation.style.transform = "none";
                     clonedQuotation.style.margin = "0";
                     clonedQuotation.style.boxSizing = "border-box";
+                    clonedDoc.querySelectorAll(".document-page").forEach(page => {
+                        page.style.width = "794px";
+                        page.style.minHeight = "1123px";
+                        page.style.padding = "20mm 15mm";
+                        page.style.boxSizing = "border-box";
+                        page.style.pageBreakAfter = "always";
+                        page.style.breakAfter = "page";
+                    });
                 }
             }
         },
@@ -650,7 +825,7 @@ async function downloadPDF() {
         },
         pagebreak: {
             mode: ['css', 'legacy'],
-            avoid: ['.metadata-row', '.recipient-section', '.salutation-section', 'thead', 'tr', '.remarks-container', '.closing-paragraph', '.signoff-container']
+            after: '.document-page'
         }
     };
 
