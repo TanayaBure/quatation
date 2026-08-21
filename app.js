@@ -127,7 +127,6 @@ const btnAddRemark = document.getElementById("btn-add-remark");
 const btnReset = document.getElementById("btn-reset");
 const btnClear = document.getElementById("btn-clear");
 const btnDownloadPdf = document.getElementById("btn-download-pdf");
-const btnPrintBrowser = document.getElementById("btn-print-browser");
 const pageCountBadge = document.getElementById("page-count-badge");
 
 // Welcome Screen Elements
@@ -455,12 +454,9 @@ function setupEventListeners() {
     });
 
     // PDF generation trigger
-    btnDownloadPdf.addEventListener("click", downloadPDF);
-
-    // Browser Print trigger
-    btnPrintBrowser.addEventListener("click", () => {
-        window.print();
-    });
+    if (btnDownloadPdf) {
+        btnDownloadPdf.addEventListener("click", downloadPDF);
+    }
 
     // Welcome Portal Button - Start with original preset
     btnStartPreset.addEventListener("click", () => {
@@ -504,82 +500,176 @@ function setupEventListeners() {
     });
 }
 
-// 7. Dynamic PDF Export using html2pdf.js
-function downloadPDF() {
+// 7. Dynamic PDF Export using isolated DOM clone
+async function downloadPDF() {
+    const btn = document.getElementById("btn-download-pdf");
     const docElement = document.getElementById("quotation-document");
-    if (!docElement) return;
-    
-    // Get client name for dynamic file name
-    const clientSanitized = (clientNameInput.value || "Client").trim().replace(/[^a-zA-Z0-9]/g, "_");
-    const refSanitized = (refNoInput.value || "Quote").trim().replace(/[^a-zA-Z0-9]/g, "_");
-    const filename = `JKMaxx_Quotation_${clientSanitized}_${refSanitized}.pdf`;
 
-    // Save scroll positions to prevent view jumping
-    const workspace = document.querySelector(".document-workspace");
-    const prevScrollTop = workspace ? workspace.scrollTop : 0;
-    const prevScrollLeft = workspace ? workspace.scrollLeft : 0;
-
-    // Reset scroll to 0 to prevent html2canvas cropping
-    if (workspace) {
-        workspace.scrollTop = 0;
-        workspace.scrollLeft = 0;
+    // Critical Check 1: Verify DOM element exists
+    if (!docElement) {
+        console.error("Technical Error: #quotation-document element not found in DOM.");
+        alert("Unable to generate PDF. Please try again.");
+        return;
     }
 
-    // html2pdf options
+    // Critical Check 2: Check if library is available
+    if (typeof html2pdf === "undefined") {
+        console.error("Technical Error: html2pdf library is not loaded.");
+        alert("Unable to generate PDF. Please try again.");
+        return;
+    }
+
+    // Critical Check 3: Check if document has non-zero dimensions
+    if (docElement.scrollWidth === 0 && docElement.scrollHeight === 0) {
+        console.error("Technical Error: Quotation document has zero dimensions.");
+        alert("Unable to generate PDF. Please try again.");
+        return;
+    }
+
+    // Prevent multiple clicks & show loading feedback
+    const defaultBtnHTML = `<i class="fa-solid fa-file-pdf"></i> <span>Download PDF</span>`;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Generating PDF...</span>`;
+    }
+
+    // Generate sanitized filename with safe fallback
+    let refPart = (refNoInput.value || "").trim().replace(/[^a-zA-Z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    let clientPart = (clientNameInput.value || "").trim().replace(/[^a-zA-Z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    
+    let filename = "Quotation.pdf";
+    if (refPart && clientPart) {
+        filename = `Quotation-${refPart}-${clientPart}.pdf`;
+    } else if (refPart) {
+        filename = `Quotation-${refPart}.pdf`;
+    } else if (clientPart) {
+        filename = `Quotation-${clientPart}.pdf`;
+    }
+
+    // Create an isolated sandbox on document.body with fixed standard A4 width (794px = 210mm at 96dpi)
+    // Placed at fixed (0,0) with negative z-index so boundingClientRect has x=0, y=0 (preventing any left-side clipping)
+    const sandbox = document.createElement("div");
+    sandbox.className = "pdf-export-sandbox";
+    sandbox.style.position = "fixed";
+    sandbox.style.left = "0px";
+    sandbox.style.top = "0px";
+    sandbox.style.width = "794px";
+    sandbox.style.minHeight = "1123px";
+    sandbox.style.zIndex = "-99999";
+    sandbox.style.backgroundColor = "#ffffff";
+    sandbox.style.overflow = "visible";
+    sandbox.style.boxSizing = "border-box";
+    sandbox.style.margin = "0";
+    sandbox.style.padding = "0";
+    sandbox.style.transform = "none";
+    sandbox.style.display = "block";
+
+    // Deep clone the live quotation document
+    const clone = docElement.cloneNode(true);
+    clone.id = "quotation-document-clone";
+    clone.style.width = "794px";
+    clone.style.minHeight = "1123px";
+    clone.style.margin = "0";
+    clone.style.padding = "20mm 15mm";
+    clone.style.boxSizing = "border-box";
+    clone.style.transform = "none";
+    clone.style.boxShadow = "none";
+    clone.style.borderRadius = "0";
+    clone.style.backgroundColor = "#ffffff";
+    clone.style.color = "#000000";
+    clone.style.position = "static";
+    clone.style.display = "block";
+    clone.style.overflow = "visible";
+
+    // Remove any live-only page break indicators in the PDF clone
+    clone.querySelectorAll(".page-break-indicator").forEach(el => {
+        el.style.display = "none";
+    });
+
+    sandbox.appendChild(clone);
+    document.body.appendChild(sandbox);
+
+    // Explicit height on clone based on actual scrollHeight
+    clone.style.height = `${clone.scrollHeight}px`;
+
+    // Critical Check 4: Wait for any images / logos to load
+    const images = Array.from(clone.querySelectorAll("img"));
+    if (images.length > 0) {
+        await Promise.all(images.map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(resolve => {
+                img.onload = resolve;
+                img.onerror = resolve;
+            });
+        }));
+    }
+
+    // Critical Check 5: Wait for web fonts & layout rendering to complete
+    if (document.fonts && document.fonts.ready) {
+        try {
+            await document.fonts.ready;
+        } catch (fontErr) {
+            console.warn("Font loading wait warning:", fontErr);
+        }
+    }
+
+    // html2pdf options ensuring non-zero height, high DPI scale, and clean multi-page breaks
     const opt = {
-        margin: 0, // 0 margins so A4 fits exactly with docElement padding
+        margin: 0,
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-            scale: 2, // high quality
-            useCORS: true, 
+        html2canvas: {
+            scale: 2, // High resolution (300 DPI equivalent) for crisp logos and text
+            useCORS: true,
+            allowTaint: true,
             logging: false,
             letterRendering: true,
             scrollX: 0,
             scrollY: 0,
-            windowWidth: 794, // Force html2canvas viewport width to match A4 width (210mm)
-            windowHeight: docElement.offsetHeight,
+            x: 0,
+            y: 0,
+            width: 794,
+            windowWidth: 794,
+            backgroundColor: '#ffffff',
             onclone: (clonedDoc) => {
-                const clone = clonedDoc.getElementById("quotation-document");
-                if (clone) {
-                    clone.style.height = `${clone.scrollHeight}px`;
+                const clonedQuotation = clonedDoc.getElementById("quotation-document-clone") || clonedDoc.getElementById("quotation-document");
+                if (clonedQuotation) {
+                    clonedQuotation.style.width = "794px";
+                    clonedQuotation.style.height = `${clonedQuotation.scrollHeight}px`;
+                    clonedQuotation.style.overflow = "visible";
+                    clonedQuotation.style.transform = "none";
+                    clonedQuotation.style.margin = "0";
+                    clonedQuotation.style.boxSizing = "border-box";
                 }
             }
         },
-        jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'portrait' 
+        jsPDF: {
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'portrait'
         },
-        pagebreak: { 
-            mode: ['css', 'legacy'], // handles manual page breaks (.page-break-row)
-            avoid: ['.metadata-row', '.recipient-section', '.salutation-section', 'thead', '.signoff-container'] 
+        pagebreak: {
+            mode: ['css', 'legacy'],
+            avoid: ['.metadata-row', '.recipient-section', '.salutation-section', 'thead', 'tr', '.remarks-container', '.closing-paragraph', '.signoff-container']
         }
     };
 
-    // Temporarily apply print classes during PDF rendering
-    document.body.classList.add("pdf-rendering");
-
-    // Use html2pdf on the live element
-    html2pdf().from(docElement).set(opt).save()
-        .then(() => {
-            document.body.classList.remove("pdf-rendering");
-            // Restore scroll positions
-            if (workspace) {
-                workspace.scrollTop = prevScrollTop;
-                workspace.scrollLeft = prevScrollLeft;
-            }
-        })
-        .catch(err => {
-            console.error("PDF Export Error: ", err);
-            document.body.classList.remove("pdf-rendering");
-            // Restore scroll positions
-            if (workspace) {
-                workspace.scrollTop = prevScrollTop;
-                workspace.scrollLeft = prevScrollLeft;
-            }
-            alert("Could not generate PDF. Please try the 'Browser Print' option instead.");
-        });
+    try {
+        await html2pdf().from(clone).set(opt).save();
+    } catch (err) {
+        console.error("Technical PDF Export Error: ", err);
+        alert("Unable to generate PDF. Please try again.");
+    } finally {
+        // Clean up sandbox from DOM
+        if (sandbox && sandbox.parentNode) {
+            sandbox.parentNode.removeChild(sandbox);
+        }
+        // Return button to original state
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = defaultBtnHTML;
+        }
+    }
 }
 
 // 8. Mobile Navigation & Scaling Logic

@@ -337,17 +337,6 @@ textarea {
     width: 100%;
 }
 
-/* Bottom Actions Panel */
-.export-actions {
-    padding: 1.5rem;
-    border-top: 1px solid var(--border-dark);
-    background: #0f172a;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    box-shadow: 0 -10px 25px rgba(0,0,0,0.2);
-}
-
 /* Ripple effect utility */
 .ripple {
     position: relative;
@@ -367,18 +356,27 @@ textarea {
 /* Preview Toolbar */
 .preview-toolbar {
     background-color: white;
-    padding: 0.75rem 2rem;
+    padding: 0.75rem 1.5rem;
     border-bottom: 1px solid #e2e8f0;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 1rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    z-index: 10;
+}
+
+.preview-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
 }
 
 .preview-badge {
     color: #0f172a;
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -396,6 +394,41 @@ textarea {
     font-weight: 600;
     padding: 0.25rem 0.65rem;
     border-radius: 9999px;
+}
+
+.preview-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.btn-download {
+    padding: 0.55rem 1.25rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 8px;
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(255, 127, 39, 0.3);
+    transition: all 0.2s ease;
+}
+
+.btn-download:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(255, 127, 39, 0.45);
+}
+
+.btn-download:active {
+    transform: translateY(0);
+}
+
+.btn-download:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* Workspace Canvas styling */
@@ -534,6 +567,8 @@ textarea {
     border: 1.5px solid var(--doc-border);
     padding: 10px 12px;
     vertical-align: middle;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .quote-table th {
@@ -555,6 +590,7 @@ textarea {
 /* Table styling fixes */
 .quote-table tbody tr {
     page-break-inside: avoid;
+    break-inside: avoid;
 }
 
 /* Remarks & Conditions styling */
@@ -624,7 +660,7 @@ textarea {
     }
 }
 
-/* --- PRINT AND PDF GENERATION STYLING --- */
+/* --- PRINT STYLING --- */
 @media print {
     body {
         background-color: white !important;
@@ -797,6 +833,17 @@ textarea {
     .editor-form {
         padding: 1rem;
         gap: 1rem;
+    }
+
+    /* Preview Toolbar Mobile Styling */
+    .preview-toolbar {
+        padding: 0.6rem 0.9rem;
+        gap: 0.5rem;
+    }
+
+    .btn-download {
+        padding: 0.45rem 0.85rem;
+        font-size: 0.8rem;
     }
 }
 
@@ -1015,7 +1062,7 @@ textarea {
     background-color: var(--border-dark);
 }
 
-/* --- CUSTOM PAGE BREAK & PDF RENDERING RULES --- */
+/* --- CUSTOM PAGE BREAK RULES --- */
 
 /* Page break inside table rows */
 .page-break-row {
@@ -1058,7 +1105,7 @@ textarea {
     margin: 0 1rem;
 }
 
-/* Hide indicators during PDF rendering and Browser Print */
+/* Hide indicators during Browser Print */
 @media print {
     .page-break-indicator {
         display: none !important;
@@ -1068,62 +1115,6 @@ textarea {
         padding: 0 !important;
         height: 0 !important;
     }
-}
-
-/* Layout overrides during PDF rendering to prevent scaling, shifting, or viewport clipping */
-body.pdf-rendering {
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: visible !important;
-    height: auto !important;
-    width: auto !important;
-    background-color: white !important;
-}
-
-body.pdf-rendering .app-container {
-    height: auto !important;
-    width: auto !important;
-    display: block !important;
-    overflow: visible !important;
-}
-
-body.pdf-rendering .editor-panel {
-    display: none !important;
-}
-
-body.pdf-rendering .preview-panel {
-    width: 100% !important;
-    height: auto !important;
-    display: flex !important;
-    overflow: visible !important;
-    background-color: white !important;
-}
-
-body.pdf-rendering .document-workspace {
-    width: 100% !important;
-    height: auto !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: visible !important;
-    display: block !important; /* disable flex centering to start at (0,0) */
-}
-
-body.pdf-rendering #quotation-document {
-    transform: none !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    width: 210mm !important;
-    min-height: 297mm !important;
-}
-
-body.pdf-rendering .page-break-indicator {
-    display: none !important;
-}
-
-body.pdf-rendering .page-break-row td {
-    border: none !important;
-    padding: 0 !important;
-    height: 0 !important;
 }
 
 
