@@ -233,7 +233,7 @@ function paginateQuotation() {
                 products: [],
                 hasHeader: false,
                 hasFooter: false,
-                usedHeight: theadHeight + 40 // includes top continuation header
+                usedHeight: theadHeight
             };
         }
 
@@ -252,7 +252,7 @@ function paginateQuotation() {
             products: [],
             hasHeader: false,
             hasFooter: true,
-            usedHeight: footerBlockHeight + 40
+            usedHeight: footerBlockHeight
         });
     }
 
@@ -341,14 +341,6 @@ function updatePreview() {
                     <div class="greeting-phrase">${introMsg}</div>
                     <div class="pitch-text">${introP1}</div>
                     <div class="offer-text">${introP2}</div>
-                </div>
-            `;
-        } else {
-            // Subsequent Pages: Proper Top Margin + Continuation Header
-            pageContent += `
-                <div class="page-continuation-header">
-                    <div class="brand-mini">JKMaxx <span>PAINTS</span> — Quotation Ref: ${refNo}</div>
-                    <div class="page-num">Page ${page.pageNumber} of ${totalPages}</div>
                 </div>
             `;
         }
