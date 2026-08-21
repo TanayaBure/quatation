@@ -528,10 +528,11 @@ textarea {
     align-items: center;
 }
 
-.logo-svg {
-    height: 75px;
-    width: 310px;
-    max-width: 100%;
+.logo-img, .logo-svg {
+    height: 72px;
+    width: auto;
+    max-width: 320px;
+    object-fit: contain;
     display: block;
 }
 
