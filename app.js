@@ -7,56 +7,56 @@ const originalPreset = {
     clientName: "Bhayaji Landge",
     clientMobile: "9823666443",
     dearGreeting: "Dear Sir,",
-    introMsg: "Greetings from JK MaxX Paints ,",
+    introMsg: "Greetings from JK MaxX\nPaints ,",
     introP1: "JK MaxX Paints as a part of JK Cement (Pioneer in White Cement & Wall Putty) now in Decorative Paints segment.",
-    introP2: "We would like to thank you for showing interest in our Products. As per our discussion, we submit here our best offer for your Nagpur.",
+    introP2: "We would like to thank you for showing interest in our Products. As per our discussion, we are submitt here our best offer for your Nagpur.",
     products: [
         {
-            name: "Majesta tru shyn interior emulsion 20 liter",
+            name: "Majesta tru shyn\ninterior emulsion 20\nliter",
             specification: "It delivers a captivating, deep Luxe Sheen that transforms walls into a surface of sheer sophistication. Experience the perfect fusion of advanced durability and lasting, opulent beauty",
             rate: "11660/-",
             pageBreakAfter: false
         },
         {
-            name: "Maximo Ultra Exterior Emulsion - 20 litre",
+            name: "Maximo Ultra\nExterior Emulsion -\n20 litre",
             specification: "All Weather Proof Technology, Therma-Guard Tech upto 7 degrees, Rich Sheen, Anti-Algal & Anti-Fungal, Bridges Hairline Cracks, 8 Years warranty",
             rate: "8650/-",
             pageBreakAfter: false
         },
         {
-            name: "JK Maxx Seal Damp proof - 20 litre",
+            name: "JK Maxx Seal\nDamp proof - 20\nlitre",
             specification: "Waterproofing Guarantee, High Elongation, Water Pressure Resistance, Superior Adhesion, Bridges Cracks Upto 1.5mm, Interior & Exterior, 10 Years warranty",
             rate: "4800/-",
             pageBreakAfter: false
         },
         {
-            name: "WallMaxX Putty 40kg",
+            name: "WallMaxX Putty\n40kg",
             specification: "Resists Flaking, No Chalking, Superior Adhesion, Longer Paint Life",
             rate: "710 /-",
             pageBreakAfter: false
         },
         {
-            name: "Rustic Bag 2mm 25 kg",
+            name: "Rustic Bag 2mm\n25 kg",
             specification: "JK Maximo Patternz is a high performance textured wall finish. It is based on high performance Silicone acrylic emulsions, inorganic pigments, siliceous minerals, Special biocides, algicides, fungicides, surfactants etc. It is ideal for exteriors & interiors of the buildings. It has a long life and is easy to apply. JK Maximo Patternz Superfine provide unique features so essential yet missing in conventional/look alike products",
             rate: "770 /-",
             pageBreakAfter: true // Matches original PDF where the 6th item goes to Page 2
         },
         {
-            name: "Primer Interior 20 liter",
+            name: "Primer Interior\n20 liter",
             specification: "Superior Whiteness\nChalking Free\nEase of Application",
             rate: "1800/-",
             pageBreakAfter: false
         }
     ],
     remarks: [
-        "The above rate inclusive of loading, unloading, transportation and GST – 18% as applicable.",
+        "The above rate inclusive of loading, unloading, trnasportation and GST – 18% as applicable.",
         "The rates mentioned for Paint is for Bases, Colorant cost would be extra.",
         "Payment Terms - Immediately after delivery of the material."
     ],
     closingMsg: "We trust that you will find our quote satisfactory and look forward to working with you. Please contact us should you have any questions at all.",
     signOffCompany: "For JK MaxX Paints",
     repName: "Aniket Bramnhe",
-    repTitle: "Demand and Generation",
+    repTitle: "Demad and Generation",
     repLocation: "Nagpur",
     repMobile: "Mo. No. - 90968422"
 };
@@ -180,22 +180,21 @@ function getLogoHTML() {
 // Calculate row height dynamically to prevent splitting
 function estimateRowHeight(prod) {
     const spec = prod.specification || "";
-    // Count explicit newlines + wrapped lines (approx 45 characters per line in 58% width col)
-    const specLines = spec.split("\n").reduce((acc, line) => acc + Math.max(1, Math.ceil(line.length / 45)), 0);
-    // Wrapped lines of product name (approx 22 characters per line in 25% width col)
-    const nameLines = Math.max(1, Math.ceil((prod.name || "").length / 22));
+    // Count explicit newlines + wrapped lines (approx 55 characters per line in 58% width col)
+    const specLines = spec.split("\n").reduce((acc, line) => acc + Math.max(1, Math.ceil(line.length / 55)), 0);
+    // Wrapped lines of product name (approx 26 characters per line in 25% width col)
+    const nameLines = Math.max(1, Math.ceil((prod.name || "").length / 26));
     const maxLines = Math.max(specLines, nameLines);
-    // 20px per line + 28px cell padding/borders
-    return Math.max(52, maxLines * 20 + 28);
+    return Math.max(42, maxLines * 16 + 20);
 }
 
 // Dynamic Multi-Page Pagination Calculation
 function paginateQuotation() {
-    // Conservative usable height per A4 page (A4 1123px - 151px padding = 972px; safe budget 910px)
-    const pageMaxHeight = 910;
-    const p1TopContentHeight = 345; // Logo + Metadata + Recipient + Salutation
-    const theadHeight = 44; // Table header row
-    const footerBlockHeight = 265; // Remarks + Closing message + Sign-off
+    // Usable height per A4 page (A4 1123px - 114px padding = 1009px; safe budget 980px)
+    const pageMaxHeight = 980;
+    const p1TopContentHeight = 310; // Logo + Metadata + Recipient + Salutation
+    const theadHeight = 35; // Table header row
+    const footerBlockHeight = 250; // Remarks + Closing message + Sign-off
 
     const pages = [];
     let currentPage = {
@@ -219,7 +218,7 @@ function paginateQuotation() {
                 products: [],
                 hasHeader: false,
                 hasFooter: false,
-                usedHeight: theadHeight
+                usedHeight: 0
             };
         }
 
@@ -259,13 +258,13 @@ function updatePreview() {
     const clientName = escapeHTML(clientNameInput.value || "Bhayaji Landge");
     const clientMobile = escapeHTML(clientMobileInput.value || "9823666443");
     const dearGreeting = escapeHTML(dearGreetingInput.value || "Dear Sir,");
-    const introMsg = escapeHTML(introMsgInput.value || "Greetings from JK MaxX Paints ,");
+    const introMsg = escapeHTML(introMsgInput.value || "Greetings from JK MaxX\nPaints ,").replace(/\n/g, "<br>");
     const introP1 = escapeHTML(introP1Input.value || "JK MaxX Paints as a part of JK Cement (Pioneer in White Cement & Wall Putty) now in Decorative Paints segment.");
-    const introP2 = escapeHTML(introP2Input.value || "We would like to thank you for showing interest in our Products. As per our discussion, we submit here our best offer for your Nagpur.");
+    const introP2 = escapeHTML(introP2Input.value || "We would like to thank you for showing interest in our Products. As per our discussion, we are submitt here our best offer for your Nagpur.");
     const closingMsg = escapeHTML(closingMsgInput.value || "We trust that you will find our quote satisfactory and look forward to working with you. Please contact us should you have any questions at all.");
     const signOffCompany = escapeHTML(signOffCompanyInput.value || "For JK MaxX Paints");
     const repName = escapeHTML(repNameInput.value || "Aniket Bramnhe");
-    const repTitle = escapeHTML(repTitleInput.value || "Demand and Generation");
+    const repTitle = escapeHTML(repTitleInput.value || "Demad and Generation");
     const repLocation = escapeHTML(repLocationInput.value || "Nagpur");
     const repMobile = escapeHTML(repMobileInput.value || "Mo. No. - 90968422");
 
@@ -331,11 +330,11 @@ function updatePreview() {
             `;
         }
 
-        // Render Table if this page has products with REPEATED THEAD
+        // Render Table if this page has products
         if (page.products.length > 0) {
             let tableRowsHTML = "";
             page.products.forEach(prod => {
-                const escapedName = escapeHTML(prod.name || "");
+                const escapedName = escapeHTML(prod.name || "").replace(/\n/g, "<br>");
                 const escapedRate = escapeHTML(prod.rate || "");
                 const formattedSpec = escapeHTML(prod.specification || "").replace(/\n/g, "<br>");
 
@@ -348,15 +347,19 @@ function updatePreview() {
                 `;
             });
 
+            const theadMarkup = page.pageNumber === 1 ? `
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Product</th>
+                        <th style="width: 58%;">Specification</th>
+                        <th style="width: 17%; text-align: right;">Rate</th>
+                    </tr>
+                </thead>
+            ` : ``;
+
             pageContent += `
                 <table class="quote-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 25%;">Product</th>
-                            <th style="width: 58%;">Specification</th>
-                            <th style="width: 17%; text-align: right;">Rate</th>
-                        </tr>
-                    </thead>
+                    ${theadMarkup}
                     <tbody>
                         ${tableRowsHTML}
                     </tbody>
