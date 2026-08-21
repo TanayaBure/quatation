@@ -194,18 +194,21 @@ function getLogoSVGHTML() {
 // Calculate row height dynamically to prevent splitting
 function estimateRowHeight(prod) {
     const spec = prod.specification || "";
-    const specLines = spec.split("\n").reduce((acc, line) => acc + Math.max(1, Math.ceil(line.length / 50)), 0);
-    const nameLines = Math.max(1, Math.ceil((prod.name || "").length / 25));
+    // Count explicit newlines + wrapped lines (approx 45 characters per line in 58% width col)
+    const specLines = spec.split("\n").reduce((acc, line) => acc + Math.max(1, Math.ceil(line.length / 45)), 0);
+    // Wrapped lines of product name (approx 22 characters per line in 25% width col)
+    const nameLines = Math.max(1, Math.ceil((prod.name || "").length / 22));
     const maxLines = Math.max(specLines, nameLines);
-    return Math.max(48, maxLines * 19 + 25);
+    // 20px per line + 28px cell padding/borders
+    return Math.max(52, maxLines * 20 + 28);
 }
 
 // Dynamic Multi-Page Pagination Calculation
 function paginateQuotation() {
-    // Standard usable height per A4 page (297mm - 40mm margins ≈ 965px at 96 DPI)
-    const pageMaxHeight = 965;
+    // Conservative usable height per A4 page (A4 1123px - 151px padding = 972px; safe budget 910px)
+    const pageMaxHeight = 910;
     const p1TopContentHeight = 345; // Logo + Metadata + Recipient + Salutation
-    const theadHeight = 42; // Table header row
+    const theadHeight = 44; // Table header row
     const footerBlockHeight = 265; // Remarks + Closing message + Sign-off
 
     const pages = [];
@@ -230,7 +233,7 @@ function paginateQuotation() {
                 products: [],
                 hasHeader: false,
                 hasFooter: false,
-                usedHeight: theadHeight + 35 // includes top continuation header
+                usedHeight: theadHeight + 40 // includes top continuation header
             };
         }
 
@@ -238,7 +241,7 @@ function paginateQuotation() {
         currentPage.usedHeight += rowHeight;
     });
 
-    // Check if footer block fits on current page
+    // Check if footer block fits on current page without overflowing
     if (currentPage.usedHeight + footerBlockHeight <= pageMaxHeight) {
         currentPage.hasFooter = true;
         pages.push(currentPage);
@@ -249,7 +252,7 @@ function paginateQuotation() {
             products: [],
             hasHeader: false,
             hasFooter: true,
-            usedHeight: footerBlockHeight + 35
+            usedHeight: footerBlockHeight + 40
         });
     }
 
@@ -668,7 +671,7 @@ function setupEventListeners() {
     });
 }
 
-// 7. Dynamic PDF Export using isolated DOM clone
+// 7. Dynamic Multi-Page PDF Export using isolated page-by-page jsPDF rendering
 async function downloadPDF() {
     const btn = document.getElementById("btn-download-pdf");
     const docElement = document.getElementById("quotation-document");
@@ -681,16 +684,12 @@ async function downloadPDF() {
     }
 
     // Critical Check 2: Check if library is available
-    if (typeof html2pdf === "undefined") {
-        console.error("Technical Error: html2pdf library is not loaded.");
-        alert("Unable to generate PDF. Please try again.");
-        return;
-    }
+    const html2canvasLib = window.html2canvas;
+    const jsPDFLib = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
 
-    // Critical Check 3: Check if document has non-zero dimensions
-    if (docElement.scrollWidth === 0 && docElement.scrollHeight === 0) {
-        console.error("Technical Error: Quotation document has zero dimensions.");
-        alert("Unable to generate PDF. Please try again.");
+    if (!html2canvasLib || !jsPDFLib) {
+        console.error("Technical Error: Required PDF libraries (html2canvas / jsPDF) are not loaded.", { html2canvasLib, jsPDFLib });
+        alert("PDF generator library failed to initialize. Please refresh the page and try again.");
         return;
     }
 
@@ -714,15 +713,14 @@ async function downloadPDF() {
         filename = `Quotation-${clientPart}.pdf`;
     }
 
-    // Create an isolated sandbox on document.body with fixed standard A4 width (794px = 210mm at 96dpi)
-    // Placed at fixed (0,0) with negative z-index so boundingClientRect has x=0, y=0 (preventing any left-side clipping)
+    // Create an isolated sandbox on document.body for capturing pure unscaled A4 pages
+    // Positioned at (0,0) with negative z-index to guarantee zero coordinate clipping
     const sandbox = document.createElement("div");
     sandbox.className = "pdf-export-sandbox";
     sandbox.style.position = "fixed";
     sandbox.style.left = "0px";
     sandbox.style.top = "0px";
     sandbox.style.width = "794px";
-    sandbox.style.minHeight = "1123px";
     sandbox.style.zIndex = "-99999";
     sandbox.style.backgroundColor = "#ffffff";
     sandbox.style.overflow = "visible";
@@ -732,35 +730,58 @@ async function downloadPDF() {
     sandbox.style.transform = "none";
     sandbox.style.display = "block";
 
-    // Deep clone the live quotation document
+    // Clone the quotation document into sandbox
     const clone = docElement.cloneNode(true);
     clone.id = "quotation-document-clone";
     clone.style.width = "794px";
-    clone.style.minHeight = "1123px";
-    clone.style.margin = "0";
-    clone.style.padding = "20mm 15mm";
-    clone.style.boxSizing = "border-box";
     clone.style.transform = "none";
-    clone.style.boxShadow = "none";
-    clone.style.borderRadius = "0";
-    clone.style.backgroundColor = "#ffffff";
-    clone.style.color = "#000000";
-    clone.style.position = "static";
+    clone.style.margin = "0";
+    clone.style.padding = "0";
     clone.style.display = "block";
-    clone.style.overflow = "visible";
+    clone.style.backgroundColor = "#ffffff";
+    sandbox.appendChild(clone);
+    document.body.appendChild(sandbox);
 
-    // Remove any live-only page break indicators in the PDF clone
+    // Extract all discrete A4 page elements
+    const pageElements = Array.from(clone.querySelectorAll(".document-page"));
+    if (pageElements.length === 0) {
+        pageElements.push(clone);
+    }
+
+    // Prepare each page with explicit unscaled standard A4 pixels (794px x 1123px = 210mm x 297mm at 96 DPI)
+    pageElements.forEach(page => {
+        page.style.width = "794px";
+        page.style.height = "1123px";
+        page.style.minHeight = "1123px";
+        page.style.maxHeight = "1123px";
+        page.style.padding = "20mm 15mm";
+        page.style.boxSizing = "border-box";
+        page.style.margin = "0";
+        page.style.boxShadow = "none";
+        page.style.transform = "none";
+        page.style.backgroundColor = "#ffffff";
+        page.style.color = "#000000";
+        page.style.overflow = "hidden";
+        page.style.position = "relative";
+        page.style.display = "flex";
+        page.style.flexDirection = "column";
+    });
+
+    // Remove any live-only page break indicators in the clone
     clone.querySelectorAll(".page-break-indicator").forEach(el => {
         el.style.display = "none";
     });
 
-    sandbox.appendChild(clone);
-    document.body.appendChild(sandbox);
+    // Wait for web fonts & layout rendering to complete
+    if (document.fonts && document.fonts.ready) {
+        try {
+            await document.fonts.ready;
+        } catch (fontErr) {
+            console.warn("Font loading wait warning:", fontErr);
+        }
+    }
 
-    // Explicit height on clone based on actual scrollHeight
-    clone.style.height = `${clone.scrollHeight}px`;
-
-    // Critical Check 4: Wait for any images / logos to load
+    // Wait for any images / logos to load
     const images = Array.from(clone.querySelectorAll("img"));
     if (images.length > 0) {
         await Promise.all(images.map(img => {
@@ -772,65 +793,49 @@ async function downloadPDF() {
         }));
     }
 
-    // Critical Check 5: Wait for web fonts & layout rendering to complete
-    if (document.fonts && document.fonts.ready) {
-        try {
-            await document.fonts.ready;
-        } catch (fontErr) {
-            console.warn("Font loading wait warning:", fontErr);
-        }
-    }
-
-    // html2pdf options ensuring non-zero height, high DPI scale, and clean multi-page breaks
-    const opt = {
-        margin: 0,
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-            scale: 2.5, // 300+ DPI Retina rendering for ultra-sharp vector SVG logo and fonts
-            useCORS: true,
-            allowTaint: true,
-            logging: false,
-            letterRendering: true,
-            scrollX: 0,
-            scrollY: 0,
-            x: 0,
-            y: 0,
-            width: 794,
-            windowWidth: 794,
-            backgroundColor: '#ffffff',
-            onclone: (clonedDoc) => {
-                const clonedQuotation = clonedDoc.getElementById("quotation-document-clone") || clonedDoc.getElementById("quotation-document");
-                if (clonedQuotation) {
-                    clonedQuotation.style.width = "794px";
-                    clonedQuotation.style.overflow = "visible";
-                    clonedQuotation.style.transform = "none";
-                    clonedQuotation.style.margin = "0";
-                    clonedQuotation.style.boxSizing = "border-box";
-                    clonedDoc.querySelectorAll(".document-page").forEach(page => {
-                        page.style.width = "794px";
-                        page.style.minHeight = "1123px";
-                        page.style.padding = "20mm 15mm";
-                        page.style.boxSizing = "border-box";
-                        page.style.pageBreakAfter = "always";
-                        page.style.breakAfter = "page";
-                    });
-                }
-            }
-        },
-        jsPDF: {
-            unit: 'mm',
-            format: 'a4',
-            orientation: 'portrait'
-        },
-        pagebreak: {
-            mode: ['css', 'legacy'],
-            after: '.document-page'
-        }
-    };
-
     try {
-        await html2pdf().from(clone).set(opt).save();
+        // Initialize native jsPDF A4 document
+        const pdf = new jsPDFLib({
+            orientation: "portrait",
+            unit: "mm",
+            format: "a4",
+            compress: true
+        });
+
+        // Render each page individually into high-resolution canvas and place onto its own A4 PDF page
+        for (let i = 0; i < pageElements.length; i++) {
+            const pageEl = pageElements[i];
+
+            const canvas = await html2canvasLib(pageEl, {
+                scale: 2.5, // 300+ DPI Retina rendering for crisp vector logo & text
+                useCORS: true,
+                allowTaint: true,
+                logging: false,
+                letterRendering: true,
+                width: 794,
+                height: 1123,
+                windowWidth: 794,
+                windowHeight: 1123,
+                x: 0,
+                y: 0,
+                scrollX: 0,
+                scrollY: 0,
+                backgroundColor: "#ffffff"
+            });
+
+            const imgData = canvas.toDataURL("image/jpeg", 0.98);
+
+            // Add new A4 page for Page 2, 3, etc.
+            if (i > 0) {
+                pdf.addPage("a4", "portrait");
+            }
+
+            // Direct 1-to-1 placement on A4 (210mm x 297mm) with zero slicing distortion
+            pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
+        }
+
+        // Save generated PDF
+        pdf.save(filename);
     } catch (err) {
         console.error("Technical PDF Export Error: ", err);
         alert("Unable to generate PDF. Please try again.");

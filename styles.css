@@ -466,7 +466,9 @@ textarea {
 .document-page {
     background-color: white;
     width: 210mm; /* A4 width */
-    min-height: 297mm; /* A4 height */
+    height: 297mm; /* Exact A4 height */
+    min-height: 297mm;
+    max-height: 297mm;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.05);
     padding: 20mm 15mm;
     color: var(--doc-text);
